@@ -12,8 +12,8 @@ const ChatGPTModelConfig = {
   // this model field is required
   model: "text-davinci-003",
   // add your ChatGPT model parameters below
-  temperature: 0.3,
-  max_tokens: 2000,
+  temperature: 1.0,
+  max_tokens: 1000,
 };
 
 // message size for a single reply by the bot
@@ -44,10 +44,21 @@ export class ChatGPTBot {
   chatgptTriggerKeyword = Config.chatgptTriggerKeyword;
   OpenAIConfig: any; // OpenAI API key
   OpenAI: any; // OpenAI API instance
+  contextMap: Map<string, string> = new Map();
 
   // Chatgpt fine-tune for being a chatbot (guided by OpenAI official document)
-  applyContext(text: string): string {
-    return `You are an artificial intelligence bot from a company called "OpenAI". Your primary tasks are chatting with users and answering their questions.\nIf the user says: ${text}.\nYou will say: `;
+  applyContext(text: string, id: string, prefix: string): string {
+    let context = this.contextMap.get(id);
+    if (context === undefined) {
+      context = "";
+    }
+    const introduction = "The following is a conversation of a boy with his girlfriend. You are a helpful, creative, clever, sweet, sexy, and very friendly girl.\n";
+    context = context + prefix + text;
+    this.contextMap.set(id, context);
+    if (context.length > 2000) {
+      context = "..." + context.substring(context.length - 2000, context.length);
+    }
+    return introduction + context + "\nGirl:";
   }
 
   setBotName(botName: string) {
@@ -76,7 +87,7 @@ export class ChatGPTBot {
       console.log(`🎯 Trigger keyword in private chat is: ${this.chatgptTriggerKeyword}`);
       console.log(`🎯 Trigger keyword in group chat is: ${this.chatGroupTriggerKeyword}`);
       // Run an initial test to confirm API works fine
-      await this.onChatGPT("Say Hello World");
+      await this.onChatGPT("Say Hello World", "test");
       console.log(`✅ Chatbot starts success, ready to handle message!`);
     } catch (e) {
       console.error(`❌ ${e}`);
@@ -101,6 +112,8 @@ export class ChatGPTBot {
   triggerGPTMessage(text: string, isPrivateChat: boolean = false): boolean {
     const chatgptTriggerKeyword = this.chatgptTriggerKeyword;
     let triggered = false;
+    console.log(`if private chat: ${isPrivateChat}`);
+    console.log(`text: ${text}`);
     if (isPrivateChat) {
       triggered = chatgptTriggerKeyword
         ? text.startsWith(chatgptTriggerKeyword)
@@ -145,16 +158,23 @@ export class ChatGPTBot {
   }
 
   // send question to ChatGPT with OpenAI API and get answer
-  async onChatGPT(text: string): Promise<string> {
-    const inputMessage = this.applyContext(text);
+  async onChatGPT(text: string, id: string): Promise<string> {
+    console.log("text user id: ", id);
+    const inputMessage = this.applyContext(text, id, "\nBoy:");
     try {
       // config OpenAI API request body
       const response = await this.OpenAI.createCompletion({
         ...ChatGPTModelConfig,
         prompt: inputMessage,
+        stop: [" Boy:", " Girl:"]
       });
       // use OpenAI API to get ChatGPT reply message
       const chatgptReplyMessage = response?.data?.choices[0]?.text?.trim();
+      let replyMessage = chatgptReplyMessage;
+      if (replyMessage.length > 200) {
+        replyMessage = replyMessage.substring(0, 200) + "...";
+      }
+      this.applyContext(replyMessage, id, "\nGirl:");
       console.log("🤖️ Chatbot says: ", chatgptReplyMessage);
       return chatgptReplyMessage;
     } catch (e: any) {
@@ -188,7 +208,8 @@ export class ChatGPTBot {
   // reply to private message
   async onPrivateMessage(talker: ContactInterface, text: string) {
     // get reply from ChatGPT
-    const chatgptReplyMessage = await this.onChatGPT(text);
+    const id = talker.id;
+    const chatgptReplyMessage = await this.onChatGPT(text, id);
     // send the ChatGPT reply to chat
     await this.reply(talker, chatgptReplyMessage);
   }
@@ -196,8 +217,9 @@ export class ChatGPTBot {
   // reply to group message
   async onGroupMessage(room: RoomInterface, text: string) {
     // get reply from ChatGPT
-    const chatgptReplyMessage = await this.onChatGPT(text);
-    // the whole reply consist of: original text and bot reply
+    const id = room.id;
+    const chatgptReplyMessage = await this.onChatGPT(text, id);
+    // the reply consist of: original text and bot reply
     const wholeReplyMessage = `${text}\n----------\n${chatgptReplyMessage}`;
     await this.reply(room, wholeReplyMessage);
   }
