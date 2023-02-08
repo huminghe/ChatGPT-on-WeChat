@@ -55,8 +55,8 @@ export class ChatGPTBot {
     const introduction = "The following is a conversation of a boy with his girlfriend. You are a helpful, creative, clever, sweet, sexy, and very friendly girl.\n";
     context = context + prefix + text;
     this.contextMap.set(id, context);
-    if (context.length > 1400) {
-      context = "..." + context.substring(context.length - 1400, context.length);
+    if (context.length > 1000) {
+      context = "..." + context.substring(context.length - 1000, context.length);
     }
     return introduction + context + "\nGirl:";
   }
