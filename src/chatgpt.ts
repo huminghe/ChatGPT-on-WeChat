@@ -55,8 +55,8 @@ export class ChatGPTBot {
     const introduction = "The following is a conversation of a boy with his girlfriend. You are a helpful, creative, clever, sweet, sexy, and very friendly girl.\n";
     context = context + prefix + text;
     this.contextMap.set(id, context);
-    if (context.length > 2000) {
-      context = "..." + context.substring(context.length - 2000, context.length);
+    if (context.length > 1400) {
+      context = "..." + context.substring(context.length - 1400, context.length);
     }
     return introduction + context + "\nGirl:";
   }
@@ -171,8 +171,8 @@ export class ChatGPTBot {
       // use OpenAI API to get ChatGPT reply message
       const chatgptReplyMessage = response?.data?.choices[0]?.text?.trim();
       let replyMessage = chatgptReplyMessage;
-      if (replyMessage.length > 200) {
-        replyMessage = replyMessage.substring(0, 200) + "...";
+      if (replyMessage.length > 150) {
+        replyMessage = replyMessage.substring(0, 150) + "...";
       }
       this.applyContext(replyMessage, id, "\nGirl:");
       console.log("🤖️ Chatbot says: ", chatgptReplyMessage);
