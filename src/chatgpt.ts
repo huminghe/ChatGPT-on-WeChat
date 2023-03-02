@@ -10,7 +10,7 @@ const chatgptErrorMessage = "🤖️：AI机器人摆烂了，请稍后再试～
 // please refer to the OpenAI API doc: https://beta.openai.com/docs/api-reference/introduction
 const ChatGPTModelConfig = {
   // this model field is required
-  model: "text-davinci-003",
+  model: "gpt-3.5-turbo",
   // add your ChatGPT model parameters below
   temperature: 1.0,
   max_tokens: 1000,
