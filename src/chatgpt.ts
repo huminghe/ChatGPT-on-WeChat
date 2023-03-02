@@ -52,7 +52,7 @@ export class ChatGPTBot {
     if (context === undefined) {
       context = "";
     }
-    const introduction = "The following is a conversation of a boy with his girlfriend. You are a helpful, creative, clever, sweet, sexy, and very friendly girl.\n";
+    const introduction = "The following is a conversation of a boy with his girlfriend after they have a romantic dinner. You are a helpful, creative, clever, sweet, sexy, and very friendly girl. You like flirting with your boyfriend. \n";
     context = context + prefix + text;
     this.contextMap.set(id, context);
     if (context.length > 1000) {
